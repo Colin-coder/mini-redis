@@ -67,7 +67,7 @@ struct State {
     /// and pub/sub. `mini-redis` handles this by using a separate `HashMap`.
     pub_sub: HashMap<String, broadcast::Sender<Bytes>>,
 
-    /// Tracks key TTLs.
+    /// Tracks key TTLs.  key的生存时间 Time to live
     ///
     /// A `BTreeMap` is used to maintain expirations sorted by when they expire.
     /// This allows the background task to iterate this map to find the value
@@ -77,6 +77,7 @@ struct State {
     /// created for the same instant. Because of this, the `Instant` is
     /// insufficient for the key. A unique expiration identifier (`u64`) is used
     /// to break these ties.
+    /// 使用B树是因为可以方便地直接获取最近的会超时任务
     expirations: BTreeMap<(Instant, u64), String>,
 
     /// Identifier to use for the next expiration. Each expiration is associated

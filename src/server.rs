@@ -197,6 +197,7 @@ pub async fn run(listener: TcpListener, shutdown: impl Future) {
     // handle held by the listener has been dropped above, the only remaining
     // `Sender` instances are held by connection handler tasks. When those drop,
     // the `mpsc` channel will close and `recv()` will return `None`.
+    // 等待所有任务操作中 shutdown_complete_tx 全部drop掉，才返回
     let _ = shutdown_complete_rx.recv().await;
 }
 
@@ -254,6 +255,7 @@ impl Listener {
 
                 // Notifies the receiver half once all clones are
                 // dropped.
+                // 任务结束后，发送shutdown_complete_tx消息
                 _shutdown_complete: self.shutdown_complete_tx.clone(),
             };
 
@@ -324,6 +326,7 @@ impl Handler {
         while !self.shutdown.is_shutdown() {
             // While reading a request frame, also listen for the shutdown
             // signal.
+            // 两个操作同时执行，等待哪个先执行完，另一个取消执行
             let maybe_frame = tokio::select! {
                 res = self.connection.read_frame() => res?,
                 _ = self.shutdown.recv() => {

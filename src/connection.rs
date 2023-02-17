@@ -22,9 +22,11 @@ pub struct Connection {
     // The `TcpStream`. It is decorated with a `BufWriter`, which provides write
     // level buffering. The `BufWriter` implementation provided by Tokio is
     // sufficient for our needs.
+    // 写操作，多次向TcpStream写入数据，通过BufWriter防止多次写入，多次调用底层IO
     stream: BufWriter<TcpStream>,
 
     // The buffer for reading frames.
+    // 读操作
     buffer: BytesMut,
 }
 
@@ -38,6 +40,7 @@ impl Connection {
             // this is fine. However, real applications will want to tune this
             // value to their specific use case. There is a high likelihood that
             // a larger read buffer will work better.
+
             buffer: BytesMut::with_capacity(4 * 1024),
         }
     }
@@ -66,6 +69,7 @@ impl Connection {
             //
             // On success, the number of bytes is returned. `0` indicates "end
             // of stream".
+            // read_buf 没有超时时间，这里会无限期block
             if 0 == self.stream.read_buf(&mut self.buffer).await? {
                 // The remote closed the connection. For this to be a clean
                 // shutdown, there should be no data in the read buffer. If
